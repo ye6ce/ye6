@@ -4,13 +4,24 @@ import { AIMode } from "../types";
 
 export class GeminiService {
   private static getAI() {
-    // Check both Vite-style and process.env for maximum compatibility
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    
+    // 1. Try Vite's standard way
+    // 2. Try the defined process.env from your vite.config.ts
+    // 3. Try a window-level fallback
+    const apiKey = 
+      import.meta.env.VITE_GEMINI_API_KEY || 
+      (window as any).process?.env?.GEMINI_API_KEY ||
+      (window as any).process?.env?.API_KEY;
+
     if (!apiKey) {
-      throw new Error("Missing API Key. Please set VITE_GEMINI_API_KEY in your Netlify Environment Variables.");
+      console.error("DEBUG: API Key check failed. Values:", {
+        vite: !!import.meta.env.VITE_GEMINI_API_KEY,
+        process: !!(window as any).process?.env?.GEMINI_API_KEY
+      });
+      throw new Error("API Key not found. Please check Netlify Environment Variables.");
     }
-    // Correct initialization: pass the string directly
+
+    // IMPORTANT: Some versions of the SDK take the string directly, 
+    // others take an object. This syntax is the most universally compatible:
     return new GoogleGenAI(apiKey);
   }
 
@@ -24,24 +35,27 @@ export class GeminiService {
     const genAI = this.getAI();
     
     let modelId = AI_MODELS.FAST;
-    if (['think', 'exercises'].includes(mode)) modelId = AI_MODELS.THINK;
+    if (mode === 'think') modelId = AI_MODELS.THINK;
     if (mode === 'quiz') modelId = AI_MODELS.ANALYZE;
 
+    // Use the model instance
     const model = genAI.getGenerativeModel({ model: modelId });
 
-    const systemPrompt = `You are an Algerian expert teacher. 
-    Subject: ${lessonTitle}. 
+    const systemPrompt = `You are an expert Algerian teacher explaining "${lessonTitle}". 
     Context: ${context || ''}.
-    Instructions:
-    - Explain immediately and clearly in Arabic (Standard/Algerian mix).
-    - Use LaTeX for ALL formulas. Wrap them in $ for inline and $$ for blocks.
-    - Be pedagogical and encouraging.`;
+    Rules:
+    - Language: Arabic/Algerian.
+    - Math: Use LaTeX ($..$ for inline, $$..$$ for blocks).
+    - Start explaining the lesson immediately.`;
 
-    const result = await model.generateContent(
-      image 
-        ? [`${systemPrompt}\n\nUser: ${prompt}`, { inlineData: image }]
-        : [`${systemPrompt}\n\nUser: ${prompt}`]
-    );
+    // Standard array-based content generation for maximum compatibility
+    const parts = image 
+      ? [{ text: `${systemPrompt}\n\nUser: ${prompt}` }, { inlineData: image }] 
+      : [{ text: `${systemPrompt}\n\nUser: ${prompt}` }];
+
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts }]
+    });
 
     const response = await result.response;
     return response.text();
