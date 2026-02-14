@@ -1,0 +1,8 @@
+{
+  "name": "EduAi",
+  "description": "Une plateforme d'apprentissage intelligente pour le Baccalauréat Algérien utilisant l'IA pour expliquer les leçons, résoudre les problèmes et générer des supports visuels.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
