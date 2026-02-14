@@ -1,4 +1,0 @@
-[build]
-  # This is a basic configuration.
-  # Assuming no build step is needed for this project and all files are published from the root.
-  publish = "."
