@@ -17,8 +17,6 @@ if (typeof window !== 'undefined' && pdfjs.GlobalWorkerOptions) {
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 }
 
-// --- UI Components ---
-
 const EduAiLogo: React.FC<{ className?: string }> = ({ className }) => (
 <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg"
 fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round">
@@ -28,13 +26,13 @@ fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLi
 );
 
 const App: React.FC = () => {
-// Auth State
+// --- Auth State ---
 const [user, setUser] = useState<any>(null);
 const [email, setEmail] = useState('');
 const [password, setPassword] = useState('');
 const [authLoading, setAuthLoading] = useState(false);
 
-// App State
+// --- App State ---
 const [step, setStep] = useState<NavigationStep>('specialty');
 const [selectedSpecialty, setSelectedSpecialty] = useState<Specialty | null>(null);
 const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -44,13 +42,12 @@ const [messages, setMessages] = useState<Message[]>([]);
 const [input, setInput] = useState('');
 const [isLoading, setIsLoading] = useState(false);
 
+// --- Auth Logic ---
 useEffect(() => {
-// Check active sessions
 supabase.auth.getSession().then(({ data: { session } }) => {
 setUser(session?.user ?? null);
 });
 
-// Listen for auth changes
 const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
 setUser(session?.user ?? null);
 });
@@ -74,6 +71,7 @@ const handleLogout = async () => {
 await supabase.auth.signOut();
 };
 
+// --- Chat Logic ---
 const sendMessage = async () => {
 if (!input.trim() || isLoading) return;
 
@@ -113,7 +111,7 @@ setIsLoading(false);
 }
 };
 
-// --- LOGIN UI ---
+// --- Render Login if not Authenticated ---
 if (!user) {
 return (
 <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -128,7 +126,7 @@ return (
 <input
 type="email"
 placeholder="البريد الإلكتروني"
-className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:border-white/40 transition-all outline-none"
+className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:border-white/40 transition-all outline-none text-right"
 value={email}
 onChange={(e) => setEmail(e.target.value)}
 required
@@ -136,7 +134,7 @@ required
 <input
 type="password"
 placeholder="كلمة المرور"
-className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:border-white/40 transition-all outline-none"
+className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:border-white/40 transition-all outline-none text-right"
 value={password}
 onChange={(e) => setPassword(e.target.value)}
 required
@@ -171,19 +169,23 @@ Google الدخول بواسطة
 );
 }
 
-// --- MAIN APP UI (Keep your existing structure) ---
+// --- Main App Logic ---
+const currentSubjects = selectedSpecialty
+? SUBJECTS.filter(s => s.specialties.includes(selectedSpecialty))
+: [];
+
 return (
-<div className="min-h-screen bg-black text-white overflow-x-hidden selection:bg-white selection:text-black">
-{/* Header */}
+<div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
+{/* Navbar */}
 <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/5">
 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-<div className="flex items-center gap-3">
-<button onClick={handleLogout} className="text-xs text-slate-500 hover:text-white border border-white/10 px-3 py-1 rounded-full">تسجيل الخروج</button>
+<div className="flex items-center gap-4">
+<button onClick={handleLogout} className="text-xs text-slate-500 hover:text-white border border-white/10 px-3 py-1 rounded-full">خروج</button>
 <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 overflow-hidden">
-{user.user_metadata?.avatar_url && <img src={user.user_metadata.avatar_url} alt="profile" />}
+{user.user_metadata?.avatar_url && <img src={user.user_metadata.avatar_url} alt="avatar" />}
 </div>
 </div>
-<div className="flex items-center gap-4 cursor-pointer" onClick={() => { setStep('specialty'); setSelectedSpecialty(null); setSelectedSubject(null); setSelectedLesson(null); }}>
+<div className="flex items-center gap-4 cursor-pointer" onClick={() => { setStep('specialty'); setSelectedSpecialty(null); setSelectedSubject(null); }}>
 <span className="text-2xl font-black tracking-tighter text-glow">EduAi</span>
 <EduAiLogo className="w-10 h-10" />
 </div>
@@ -191,14 +193,13 @@ return (
 </nav>
 
 <main className="pt-32 pb-40 px-6 max-w-7xl mx-auto">
+
+{/* Step 1: Specialty Selection */}
 {step === 'specialty' && (
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 {SPECIALTIES.map((s) => (
-<button
-key={s.id}
-onClick={() => { setSelectedSpecialty(s.id); setStep('subject'); }}
-className="glass-panel p-8 rounded-[2.5rem] border border-white/10 hover:border-white/30 transition-all text-right group white-glow-hover"
->
+<button key={s.id} onClick={() => { setSelectedSpecialty(s.id); setStep('subject'); }}
+className="glass-panel p-8 rounded-[2.5rem] border border-white/10 hover:border-white/30 transition-all text-right group white-glow-hover">
 <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{s.icon}</div>
 <h3 className="text-2xl font-bold">{s.name}</h3>
 </button>
@@ -206,13 +207,72 @@ className="glass-panel p-8 rounded-[2.5rem] border border-white/10 hover:border-
 </div>
 )}
 
-{/* ... Rest of your navigation steps (subject, lesson, chat) go here exactly as you built them ... */}
+{/* Step 2: Subject Selection */}
+{step === 'subject' && (
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+{currentSubjects.map((s) => (
+<button key={s.id} onClick={() => { setSelectedSubject(s); setStep('lesson'); }}
+className="glass-panel p-8 rounded-[2.5rem] border border-white/10 hover:border-white/30 transition-all text-right group white-glow-hover">
+<div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{s.icon}</div>
+<h3 className="text-2xl font-bold">{s.name}</h3>
+</button>
+))}
+</div>
+)}
 
+{/* Step 3: Lesson Selection */}
+{step === 'lesson' && selectedSubject && (
+<div className="space-y-8">
+<h2 className="text-3xl font-black text-right mb-12">دروس {selectedSubject.name}</h2>
+{selectedSubject.curriculum?.map((unit) => (
+<div key={unit.id} className="space-y-4">
+<h3 className="text-xl font-bold text-slate-400 text-right px-4">{unit.title}</h3>
+<div className="grid grid-cols-1 gap-3">
+{unit.lessons.map((lesson) => (
+<button key={lesson.id} onClick={() => { setSelectedLesson(lesson); setStep('mode'); }}
+className="glass-panel p-6 rounded-2xl border border-white/5 hover:border-white/20 text-right transition-all flex items-center justify-between group">
+<span className="opacity-0 group-hover:opacity-100 transition-all">←</span>
+<span className="font-bold">{lesson.title}</span>
+</button>
+))}
+</div>
+</div>
+))}
+</div>
+)}
+
+{/* Step 4: AI Mode Selection */}
+{step === 'mode' && (
+<div className="max-w-2xl mx-auto space-y-6">
+<h2 className="text-3xl font-black text-center mb-12">اختر وضعية الدراسة</h2>
+<div className="grid grid-cols-1 gap-4">
+{[
+{ id: 'fast', name: 'شرح سريع', desc: 'إجابات مباشرة ومختصرة' },
+{ id: 'think', name: 'تعمق في الفهم', desc: 'شرح مفصل مع الرسوم التوضيحية' },
+{ id: 'quiz', name: 'اختبر نفسك', desc: 'توليد أسئلة تفاعلية فورية' }
+].map((m) => (
+<button key={m.id} onClick={() => { setMode(m.id as AIMode); setStep('chat'); }}
+className="glass-panel p-6 rounded-3xl border border-white/10 hover:border-white/40 text-right transition-all group">
+<h4 className="text-xl font-bold mb-1">{m.name}</h4>
+<p className="text-slate-500">{m.desc}</p>
+</button>
+))}
+</div>
+</div>
+)}
+
+{/* Step 5: Chat Interface */}
 {step === 'chat' && (
-<div className="flex flex-col gap-6 max-w-4xl mx-auto">
+<div className="flex flex-col gap-6 max-w-4xl mx-auto pb-20">
+{messages.length === 0 && (
+<div className="text-center py-20">
+<h2 className="text-4xl font-black mb-4">أهلاً بك في درس {selectedLesson?.title}</h2>
+<p className="text-slate-500">أنا هنا لمساعدتك في فهم كل تفاصيل هذا الدرس</p>
+</div>
+)}
 {messages.map((m) => (
 <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-<div className={`max-w-[85%] p-6 rounded-[2rem] ${m.role === 'user' ? 'bg-white text-black font-bold' : 'glass-panel border border-white/10 text-white'}`}>
+<div className={`max-w-[85%] p-6 rounded-[2.5rem] ${m.role === 'user' ? 'bg-white text-black font-bold' : 'glass-panel border border-white/10 text-white'}`}>
 {m.content}
 </div>
 </div>
@@ -222,21 +282,21 @@ className="glass-panel p-8 rounded-[2.5rem] border border-white/10 hover:border-
 )}
 </main>
 
-{/* Input Bar for Chat */}
+{/* Persistent Chat Input */}
 {step === 'chat' && (
-<div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-20">
-<div className="max-w-4xl mx-auto flex items-center gap-4 bg-white/5 p-2 rounded-[3rem] border border-white/10 focus-within:border-white/40">
+<div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/95 to-transparent z-20">
+<div className="max-w-4xl mx-auto flex items-center gap-4 bg-white/5 p-2 rounded-[3rem] border border-white/10 focus-within:border-white/40 shadow-2xl">
 <textarea
 value={input}
 onChange={(e) => setInput(e.target.value)}
 onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
 placeholder="اطرح سؤالك هنا..."
-className="flex-1 bg-transparent border-none focus:ring-0 text-lg p-4 text-right text-white resize-none"
+className="flex-1 bg-transparent border-none focus:ring-0 text-xl p-4 text-right text-white resize-none"
 rows={1}
 />
-<button onClick={sendMessage} className="p-4 rounded-full bg-white text-black hover:bg-slate-200 transition-all">
+<button onClick={sendMessage} className="p-5 rounded-full bg-white text-black hover:bg-slate-200 transition-all active:scale-90">
 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
 </svg>
 </button>
 </div>
