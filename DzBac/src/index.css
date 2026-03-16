@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Cairo", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cairo", "Plus Jakarta Sans", sans-serif;
+  
+  --color-brand-purple: #ffffff;
+  --color-brand-glow: rgba(255, 255, 255, 0.3);
+}
+
+@layer base {
+  body {
+    @apply bg-black text-zinc-100 font-sans antialiased selection:bg-brand-purple/30;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-bold text-white;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl;
+  }
+  
+  .purple-glow {
+    box-shadow: 0 0 60px -15px var(--color-brand-glow);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-zinc-500;
+  }
+}
+
+@layer utilities {
+  .text-brand-purple {
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+  }
+  .bg-brand-purple {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+  }
+  .border-brand-purple {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
+}
+
+/* AI Chat Text Improvements */
+.ai-message-text {
+  line-height: 1.6;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}

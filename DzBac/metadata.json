@@ -1,0 +1,7 @@
+{
+  "name": "DzBac - Foreign Languages Edition",
+  "description": "A comprehensive studying platform for Algerian Baccalaureate students (Foreign Languages stream) featuring AI assistance, smart tracking, and full curriculum coverage.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
